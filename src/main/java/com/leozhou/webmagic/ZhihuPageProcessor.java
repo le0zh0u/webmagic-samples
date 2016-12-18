@@ -4,6 +4,7 @@ import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.FilePipeline;
+import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.Html;
 
@@ -28,11 +29,13 @@ public class ZhihuPageProcessor implements PageProcessor {
         page.addTargetRequests(relativeUrl);
         relativeUrl= page.getHtml().xpath("//div[@id='zh-question-related-questions']//a[@class='question_link']/@href").all();
         page.addTargetRequests(relativeUrl);
+        String title = page.getHtml().xpath("//div[@id='zh-question-title']/h2[@class='zm-item-title']/span[@class='zm-editable-content']/text()").toString();
         List<String> answers = page.getHtml().xpath("//div[@id='zh-question-answer-wrap']/div").all();
         boolean exist = false;
         for (String answer : answers){
             String vote = new Html(answer).xpath("//div[@class='zm-votebar']//span[@class='count']/text()").toString();
             if (Integer.valueOf(vote) >= voteNum){
+                page.putField("title", title);
                 page.putField("vote", vote);
                 page.putField("content", new Html(answer).xpath("//div[@class='zm-editable-content']"));
                 page.putField("userid", new Html(answer).xpath("//a[@class='author-link']/@href"));
@@ -50,7 +53,7 @@ public class ZhihuPageProcessor implements PageProcessor {
 
     public static void main(String[] args){
         Spider.create(new ZhihuPageProcessor()).addUrl("http://www.zhihu.com/search?type=question&q=java")
-                .addPipeline(new FilePipeline("/Users/zhouchunjie/workspace/java-projects/webmagic/webmagic-samples/src/main/resources/export-sample"))
+                .addPipeline(new JsonFilePipeline("/Users/zhouchunjie/workspace/java-projects/webmagic/webmagic-samples/src/main/resources/export-sample"))
         .thread(5).run();
     }
 }
